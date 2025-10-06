@@ -1,11 +1,11 @@
 const std = @import("std");
 const posix = std.posix;
 
-var interrupted: bool = false;
+var interrupted: std.atomic.Value(u8) = std.atomic.Value(u8).init(0); // Assuming Value is the generic atomic struct
 
 fn signalHandler(signum: c_int) callconv(.C) void {
     if (signum == posix.SIG.INT) {
-        interrupted = true;
+        interrupted.store(1, std.builtin.AtomicOrder.release); // Store 1 for true
         std.log.info("Caught SIGINT, setting interrupted to true.", .{});
     }
 }
@@ -63,10 +63,10 @@ pub fn main() !void {
     switch (stat.kind) {
         .directory => {
             try stdout.print("Serving folder {s} at http://localhost:{d}\n", .{ path_arg, port });
-            while (!interrupted) {
-                std.log.info("Interrupted flag (start of loop): {}", .{interrupted});
+            while (interrupted.load(std.builtin.AtomicOrder.acquire) == 0) { // Check if 0 (false)
+                std.log.info("Interrupted flag (start of loop): {}", .{interrupted.load(std.builtin.AtomicOrder.acquire) == 1}); // Log as bool
                 const event_count_result = posix.poll(&poll_fds, -1);
-                if (interrupted) break; // Explicitly break if interrupted after poll returns
+                if (interrupted.load(std.builtin.AtomicOrder.acquire) == 1) break; // Explicitly break if interrupted after poll returns
                 if (event_count_result) |event_count| {
                     if (event_count == 0) continue;
 
@@ -86,10 +86,10 @@ pub fn main() !void {
                 }
             }
             try stdout.print("Serving file {s} at http://localhost:{d}\n", .{ path_arg, port });
-            while (!interrupted) {
-                std.log.info("Interrupted flag: {}", .{interrupted});
+            while (interrupted.load(std.builtin.AtomicOrder.acquire) == 0) { // Check if 0 (false)
+                std.log.info("Interrupted flag (start of loop): {}", .{interrupted.load(std.builtin.AtomicOrder.acquire) == 1}); // Log as bool
                 const event_count_result = posix.poll(&poll_fds, -1);
-                if (interrupted) break; // Explicitly break if interrupted after poll returns
+                if (interrupted.load(std.builtin.AtomicOrder.acquire) == 1) break; // Explicitly break if interrupted after poll returns
                 if (event_count_result) |event_count| {
                     if (event_count == 0) continue;
 
