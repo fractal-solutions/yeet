@@ -21,7 +21,7 @@ To install Yeet and make it available system-wide, follow these steps:
 1.  **Prerequisites:** Ensure Zig, Node.js, and npm are installed and in your PATH. The `install.sh` script will attempt to install `pkg` if missing.
 2.  **Clone & Install:**
     ```bash
-    git clone <your-repo-url>
+    git clone github.com/fractal-solutions/yeet
     cd yeet
     sudo ./install.sh
     ```
