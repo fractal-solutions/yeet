@@ -16,21 +16,16 @@ Yeet is a lightweight and blazing-fast file server built with Zig, designed for 
 
 ### 📦 Installation
 
-To install Yeet and make it available from any directory on your system, follow these steps:
+To install Yeet and make it available system-wide, follow these steps:
 
-1.  **Clone the Repository:**
+1.  **Prerequisites:** Ensure Zig, Node.js, and npm are installed and in your PATH. The `install.sh` script will attempt to install `pkg` if missing.
+2.  **Clone & Install:**
     ```bash
     git clone <your-repo-url>
     cd yeet
+    sudo ./install.sh
     ```
-    *(Replace `<your-repo-url>` with the actual URL of your Yeet repository.)*
-
-2.  **Run the Installation Script:**
-    The `install.sh` script will check for necessary dependencies (Zig, Node.js, npm), build the server and TUI, and place the executables in your system's PATH.
-    ```bash
-    ./install.sh
-    ```
-    The script will guide you through any missing dependencies and may ask for your `sudo` password to copy files to `/usr/local/bin`.
+    *Note: `sudo` is required to copy executables to `/usr/local/bin`.*
 
 ### 🚀 Usage
 

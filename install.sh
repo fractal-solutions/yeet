@@ -24,7 +24,7 @@ if ! command -v node > /dev/null 2>&1 || ! command -v npm > /dev/null 2>&1; then
     echo ""
 echo "❌ Node.js and/or npm are not installed or not in your PATH."
     echo "Please install Node.js (which includes npm). You can find instructions at https://nodejs.org/en/download/"
-    echo "After installation, ensure 'node' and 'npm' are in your system's PATH.""
+    echo "After installation, ensure 'node' and 'npm' are in your system's PATH."
     exit 1
 fi
 echo "✅ Node.js and npm found."
@@ -91,7 +91,7 @@ fi
 
 echo ""
 echo "⚙️ Bundling yeet-tui (Node.js executable) for target: $PKG_TARGET..."
-pkg . --targets "$PKG_TARGET"
+pkg . --targets "$PKG_TARGET" -o "dist/yeet-tui-$LOWER_OS-$ARCH"
 if [ $? -ne 0 ]; then
     echo "❌ Failed to bundle yeet-tui. Please check 'pkg' output."
     exit 1
@@ -105,7 +105,7 @@ echo "Installing executables to $INSTALL_DIR (requires sudo)..."
 # Ensure install directory exists
 sudo mkdir -p "$INSTALL_DIR"
 
-sudo cp ./zig-out/bin/yeet "$INSTALL_DIR/yeet_server"
+sudo cp ./yeet "$INSTALL_DIR/yeet_server"
 sudo cp ./dist/yeet-tui-"$LOWER_OS"-"$ARCH" "$INSTALL_DIR/yeet_tui"
 sudo cp ./yeet.sh "$INSTALL_DIR/yeet"
 
