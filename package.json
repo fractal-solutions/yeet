@@ -1,0 +1,16 @@
+{
+  "name": "yeet-tui",
+  "version": "1.0.0",
+  "description": "TUI for yeet server",
+  "main": "tui.js",
+  "bin": "tui.js",
+  "scripts": {
+    "start": "node tui.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "prompts": "^2.4.2"
+  }
+}
