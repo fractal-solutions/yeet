@@ -4,7 +4,7 @@ const prompts = require('prompts');
   const yeetPid = process.argv[2]; // Get yeet PID from command line argument
   const port = process.argv[3]; // Get port from command line argument
 
-  console.log(`Qflow Server Running on Port: ${port}`);
+  console.log(`Yeet Server Running on Port: ${port}`);
   console.log(`Yeet PID: ${yeetPid}`);
   console.log('\n'); // Spacer
 

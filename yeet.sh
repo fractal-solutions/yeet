@@ -16,9 +16,9 @@ kill_yeet() {
     then
         kill $YEET_PID
         wait $YEET_PID 2>/dev/null
-        echo "Qflow server (PID: $YEET_PID) stopped."
+        echo "Yeet server (PID: $YEET_PID) stopped."
     else
-        echo "Qflow server (PID: $YEET_PID) was not running."
+        echo "Yeet server (PID: $YEET_PID) was not running."
     fi
 }
 
@@ -32,7 +32,7 @@ trap kill_yeet EXIT
 # Check if the bundled TUI executable exists
 if [ ! -f "./yeet-tui" ]; then
     echo "Error: Bundled TUI executable './yeet-tui' not found."
-    echo "Please run 'npm install -g pkg' and then 'pkg .' in this directory to create it."
+    echo "Please run 'npm install -g pkg' and then 'pkg . --targets node18-linux-x64' in this directory to create it."
     exit 1
 fi
 
