@@ -6,6 +6,7 @@ var interrupted: bool = false;
 fn signalHandler(signum: c_int) callconv(.C) void {
     if (signum == posix.SIG.INT) {
         interrupted = true;
+        std.log.info("Caught SIGINT, setting interrupted to true.", .{});
     }
 }
 
@@ -63,50 +64,48 @@ pub fn main() !void {
         .directory => {
             try stdout.print("Serving folder {s} at http://localhost:{d}\n", .{ path_arg, port });
             while (!interrupted) {
-                const event_count = posix.poll(&poll_fds, -1) catch |err| {
-                    if (err == error.Interrupted) continue;
-                    return err;
-                };
-                if (event_count == -1) {
-                    if (posix.errno(posix.getErrno()) != .INTR) {
+                std.log.info("Interrupted flag: {}", .{interrupted});
+                const event_count_result = posix.poll(&poll_fds, -1);
+                if (event_count_result) |event_count| {
+                    if (event_count == 0) continue;
+
+                    if (poll_fds[0].revents & posix.POLL.IN != 0) {
+                        const conn_fd = posix.accept(listener_fd, null, null, 0) catch |err| {
+                            if (err == error.WouldBlock) continue;
+                            return err;
+                        };
+                        if (std.Thread.spawn(.{}, handleConnection, .{ conn_fd, path_arg })) |_| {} else |err| {
+                            std.log.err("Spawn failed: {}", .{err});
+                        }
+                    }
+                } else |err| {
+                    if (err != error.Interrupted) {
                         return error.PollFailed;
                     }
                     continue;
-                }
-
-                if (poll_fds[0].revents & posix.POLL.IN != 0) {
-                    const conn_fd = posix.accept(listener_fd, null, null, 0) catch |err| {
-                        if (err == error.WouldBlock) continue;
-                        return err;
-                    };
-                    if (std.Thread.spawn(.{}, handleConnection, .{ conn_fd, path_arg })) |_| {} else |err| {
-                        std.log.err("Spawn failed: {}", .{err});
-                    }
                 }
             }
-        },
-        .file => {
             try stdout.print("Serving file {s} at http://localhost:{d}\n", .{ path_arg, port });
             while (!interrupted) {
-                const event_count = posix.poll(&poll_fds, -1) catch |err| {
-                    if (err == error.Interrupted) continue;
-                    return err;
-                };
-                if (event_count == -1) {
-                    if (posix.errno(posix.getErrno()) != .INTR) {
+                std.log.info("Interrupted flag: {}", .{interrupted});
+                const event_count_result = posix.poll(&poll_fds, -1);
+                if (event_count_result) |event_count| {
+                    if (event_count == 0) continue;
+
+                    if (poll_fds[0].revents & posix.POLL.IN != 0) {
+                        const conn_fd = posix.accept(listener_fd, null, null, 0) catch |err| {
+                            if (err == error.WouldBlock) continue;
+                            return err;
+                        };
+                        if (std.Thread.spawn(.{}, handleFileConnection, .{ conn_fd, path_arg })) |_| {} else |err| {
+                            std.log.err("Spawn failed: {}", .{err});
+                        }
+                    }
+                } else |err| {
+                    if (err != error.Interrupted) {
                         return error.PollFailed;
                     }
                     continue;
-                }
-
-                if (poll_fds[0].revents & posix.POLL.IN != 0) {
-                    const conn_fd = posix.accept(listener_fd, null, null, 0) catch |err| {
-                        if (err == error.WouldBlock) continue;
-                        return err;
-                    };
-                    if (std.Thread.spawn(.{}, handleFileConnection, .{ conn_fd, path_arg })) |_| {} else |err| {
-                        std.log.err("Spawn failed: {}", .{err});
-                    }
                 }
             }
         },
