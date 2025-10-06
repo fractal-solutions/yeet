@@ -64,8 +64,9 @@ pub fn main() !void {
         .directory => {
             try stdout.print("Serving folder {s} at http://localhost:{d}\n", .{ path_arg, port });
             while (!interrupted) {
-                std.log.info("Interrupted flag: {}", .{interrupted});
+                std.log.info("Interrupted flag (start of loop): {}", .{interrupted});
                 const event_count_result = posix.poll(&poll_fds, -1);
+                if (interrupted) break; // Explicitly break if interrupted after poll returns
                 if (event_count_result) |event_count| {
                     if (event_count == 0) continue;
 
@@ -82,13 +83,13 @@ pub fn main() !void {
                     if (err != error.Interrupted) {
                         return error.PollFailed;
                     }
-                    continue;
                 }
             }
             try stdout.print("Serving file {s} at http://localhost:{d}\n", .{ path_arg, port });
             while (!interrupted) {
                 std.log.info("Interrupted flag: {}", .{interrupted});
                 const event_count_result = posix.poll(&poll_fds, -1);
+                if (interrupted) break; // Explicitly break if interrupted after poll returns
                 if (event_count_result) |event_count| {
                     if (event_count == 0) continue;
 
@@ -105,7 +106,6 @@ pub fn main() !void {
                     if (err != error.Interrupted) {
                         return error.PollFailed;
                     }
-                    continue;
                 }
             }
         },
