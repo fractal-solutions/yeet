@@ -3,6 +3,7 @@
 set -e # Exit immediately if a command exits with a non-zero status.
 
 INSTALL_DIR="/usr/local/bin"
+SHARE_DIR="/usr/local/share/yeet"
 BUILD_DIR="build"
 
 echo "🚀 Yeet Server Installation Script"
@@ -88,11 +89,15 @@ echo "Installing executables to $INSTALL_DIR (requires sudo)..."
 
 # Ensure install directory exists
 sudo mkdir -p "$INSTALL_DIR"
+sudo mkdir -p "$SHARE_DIR"
 
 sudo cp "$BUILD_DIR/zig/$ZIG_TARGET_DIR/yeet" "$INSTALL_DIR/yeet_server"
 sudo cp "$BUILD_DIR/node/$NODE_TARGET_DIR/yeet-tui" "$INSTALL_DIR/yeet_tui"
 sudo cp "$BUILD_DIR/node/$NODE_TARGET_DIR/yeet-auth" "$INSTALL_DIR/yeet_auth"
 sudo cp "$BUILD_DIR/orchestrator/yeet.sh" "$INSTALL_DIR/yeet"
+
+sudo cp -r "auth-ui" "$SHARE_DIR/auth-ui"
+sudo cp "users.json" "$SHARE_DIR/users.json"
 
 # Make sure the copied scripts are executable
 sudo chmod +x "$INSTALL_DIR/yeet_server"

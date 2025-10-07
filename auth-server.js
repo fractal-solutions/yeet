@@ -60,7 +60,7 @@ app.get('/signup', (req, res) => {
     if (noSignup) {
         return res.status(404).send('Signup is disabled.');
     }
-    res.sendFile(path.join(__dirname, 'auth-ui', 'signup.html'));
+    res.sendFile(path.join(SHARE_DIR, 'auth-ui', 'signup.html'));
 });
 
 // Login API

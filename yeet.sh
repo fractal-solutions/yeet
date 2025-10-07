@@ -44,7 +44,7 @@ fi
 YEET_AUTH_PID=""
 if $AUTH_ENABLED; then
     echo "🚀 Starting yeet_auth server on port $AUTH_SERVER_PORT..."
-    AUTH_CMD="yeet_auth --auth-server-port $AUTH_SERVER_PORT"
+    AUTH_CMD="YEET_SHARE_DIR=/usr/local/share/yeet yeet_auth --auth-server-port $AUTH_SERVER_PORT"
     if $NO_SIGNUP; then
         AUTH_CMD+=" --no-signup"
     fi
