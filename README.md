@@ -16,26 +16,74 @@ Yeet is a lightweight and blazing-fast file server built with Zig, designed for 
 
 ### 📦 Installation
 
+Yeet provides pre-built binaries for various platforms, simplifying installation for end-users. If you wish to build from source, follow the "Building from Source" instructions below.
+
+**For End-Users (using pre-built binaries):**
+
 To install Yeet and make it available system-wide, follow these steps:
 
-1.  **Prerequisites:** Ensure Zig, Node.js, and npm are installed and in your PATH. The `install.sh` script will attempt to install `pkg` if missing.
-2.  **Clone & Install:**
+1.  **Clone the Repository:**
     ```bash
     git clone github.com/fractal-solutions/yeet
     cd yeet
+    ```
+    *(Replace `<your-repo-url>` with the actual URL of your Yeet repository.)*
+
+2.  **Run the Installation Script (with sudo):**
+    The `install.sh` script will detect your operating system and architecture, and then copy the appropriate pre-built `yeet` server, `yeet-tui` interface, and the `yeet` orchestration script to `/usr/local/bin`. Since this involves writing to system directories, you *must* run the script with `sudo`.
+
+    ```bash
     sudo ./install.sh
     ```
-    *Note: `sudo` is required to copy executables to `/usr/local/bin`.*
+    The script will require your `sudo` password to complete the installation.
+
+**Building from Source (for Developers/Contributors):**
+
+If you want to build Yeet from its source code for all supported platforms, you'll need Zig, Node.js, npm, and `pkg` installed.
+
+1.  **Prerequisites:** Ensure Zig, Node.js, and npm are installed and in your PATH. You will also need `pkg` installed globally (`npm install -g pkg`).
+2.  **Clone the Repository:**
+    ```bash
+    git clone <your-repo-url>
+    cd yeet
+    ```
+    *(Replace `<your-repo-url>` with the actual URL of your Yeet repository.)*
+3.  **Run the Build Script:**
+    ```bash
+    ./build.sh
+    ```
+    This script will compile `yeet.zig` and bundle `tui.js` for all supported operating systems and architectures, placing the resulting binaries in the `build/` directory.
 
 ### 🚀 Usage
 
-Once installed, you can run the `yeet` server from any directory, providing the path to serve and the port number:
+Once installed, you can run the `yeet` server from any directory. The `yeet` command acts as an orchestrator, launching both the server and its interactive TUI.
 
 ```bash
 yeet <path_to_serve> <port_number>
-# Example: Serve the current directory on port 9090
-yeet . 9090
 ```
+
+**Examples:**
+
+*   **Serve the current directory on port 9090:**
+    ```bash
+    yeet . 9090
+    ```
+*   **Serve a specific file (`my_document.pdf`) on port 8000:**
+    ```bash
+    yeet /path/to/my_document.pdf 8000
+    ```
+*   **Serve a different directory (`~/my_website`) on port 3000:**
+    ```bash
+    yeet ~/my_website 3000
+    ```
+*   **Serve the current directory on port 80 (requires sudo for ports < 1024):**
+    ```bash
+    sudo yeet . 80
+    ```
+*   **Accessing from another device on your local network:**
+    1.  Run `yeet` on your server machine (e.g., `yeet . 9090`).
+    2.  Find your server machine's local IP address (e.g., `192.168.1.105`).
+    3.  On another device connected to the *same WiFi network*, open a web browser and go to `http://192.168.1.105:9090`.
 
 #### Interactive TUI
 

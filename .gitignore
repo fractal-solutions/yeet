@@ -1,0 +1,21 @@
+# Build artifacts
+build/
+yeet
+yeet.o
+
+# Node.js dependencies
+node_modules/
+package-lock.json
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

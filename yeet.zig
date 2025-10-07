@@ -31,14 +31,16 @@ pub fn main() !void {
         return;
     };
 
-    const action = posix.Sigaction{
-        .handler = .{
-            .handler = signalHandler,
-        },
-        .mask = posix.empty_sigset,
-        .flags = 0,
-    };
-    posix.sigaction(posix.SIG.INT, &action, null);
+    if (@import("builtin").target.os.tag == .linux or @import("builtin").target.os.tag == .macos) {
+        const action = posix.Sigaction{
+            .handler = .{
+                .handler = signalHandler,
+            },
+            .mask = posix.empty_sigset,
+            .flags = 0,
+        };
+        posix.sigaction(posix.SIG.INT, &action, null);
+    }
 
     const address = try std.net.Address.parseIp("0.0.0.0", port);
     const listener_fd = try posix.socket(address.any.family, posix.SOCK.STREAM | posix.SOCK.NONBLOCK, 0);

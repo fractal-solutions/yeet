@@ -6,8 +6,8 @@
 PORT="${!#}"
 
 # Start yeet server in the background
-zig build-exe yeet.zig &> /dev/null
-./yeet "$@" &
+# Assuming yeet_server is in PATH after installation
+yeet_server "$@" &
 YEET_PID=$!
 
 # Function to kill yeet process
@@ -26,18 +26,10 @@ kill_yeet() {
 trap kill_yeet EXIT
 
 # --- Launch Node.js TUI ---
-# This section assumes you have bundled tui.js into a standalone executable named 'yeet-tui'
-# using 'pkg' or 'nexe' and placed it in the same directory as this script.
+# Assuming yeet_tui is in PATH after installation
 
-# Check if the bundled TUI executable exists
-if [ ! -f "./yeet-tui" ]; then
-    echo "Error: Bundled TUI executable './yeet-tui' not found."
-    echo "Please run 'npm install -g pkg' and then 'pkg . --targets node18-linux-x64' in this directory to create it."
-    exit 1
-fi
-
-# Launch the bundled TUI executable, passing yeet's PID and port
-./yeet-tui "$YEET_PID" "$PORT"
+# Launch the TUI executable, passing yeet's PID and port
+yeet_tui "$YEET_PID" "$PORT"
 
 # The TUI script has exited, so kill the yeet server
 # The trap will handle the actual killing.
