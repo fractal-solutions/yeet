@@ -39,10 +39,18 @@ fn makeHttpRequest(
     errdefer response_buffer.deinit();
 
     var tmp_buf: [1024]u8 = undefined;
-    while (reader.read(&tmp_buf)) |bytes_read| {
+    while (true) {
+        const bytes_read = reader.read(&tmp_buf) catch |err| {
+            if (err == error.EndOfStream) {
+                break;
+            } else {
+                return err;
+            }
+        };
+        if (bytes_read == 0) {
+            break;
+        }
         try response_buffer.appendSlice(tmp_buf[0..bytes_read]);
-    } else |err| {
-        if (err != error.EndOfStream) return err;
     }
 
     return response_buffer;
@@ -79,13 +87,17 @@ fn proxyRequest(
     if (initial_request_body) |b| {
         try auth_writer.writeAll(b);
     }
-    // Read and forward any remaining body from client
-    var client_body_buf: [1024]u8 = undefined;
-    while (client_reader.read(&client_body_buf)) |bytes_read| {
-        try auth_writer.writeAll(client_body_buf[0..bytes_read]);
-    } else |err| {
-        if (err != error.EndOfStream) return err;
+
+    if (std.mem.eql(u8, method, "POST")) {
+        // Read and forward any remaining body from client
+        var client_body_buf: [1024]u8 = undefined;
+        while (client_reader.read(&client_body_buf)) |bytes_read| {
+            try auth_writer.writeAll(client_body_buf[0..bytes_read]);
+        } else |err| {
+            if (err != error.EndOfStream) return err;
+        }
     }
+
     try auth_writer.print("\r\n", .{}); // End of request to auth server
 
     // Read response from auth server and relay to client
@@ -306,6 +318,7 @@ fn handleConnection(allocator: std.mem.Allocator, conn_fd: posix.fd_t, base_dir:
         }
 
         // For non-auth routes, check authentication
+        std.log.info("Checking authentication...", .{});
         var auth_headers = std.ArrayList(struct { []const u8, []const u8 }).init(allocator);
         defer auth_headers.deinit();
         if (cookie_header) |cookie| {
@@ -318,6 +331,7 @@ fn handleConnection(allocator: std.mem.Allocator, conn_fd: posix.fd_t, base_dir:
             return;
         };
         defer auth_check_response_raw.deinit();
+        std.log.info("Auth check response: {s}", .{auth_check_response_raw.items});
 
         // Parse auth check response (simplified: just check for 200 OK and 'authenticated: true')
         var auth_check_lines = std.mem.splitSequence(u8, auth_check_response_raw.items, "\r\n");

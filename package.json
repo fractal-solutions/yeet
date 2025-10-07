@@ -10,6 +10,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "pkg": {
+    "assets": [
+      "auth-ui/**/*",
+      "users.json"
+    ]
+  },
   
   "dependencies": {
     "bcryptjs": "^3.0.2",
