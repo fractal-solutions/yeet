@@ -369,6 +369,20 @@ fn handleConnection(allocator: std.mem.Allocator, conn_fd: posix.fd_t, base_dir:
     };
 
     const file = std.fs.cwd().openFile(file_path, .{}) catch |err| {
+        if (err == error.FileNotFound and std.mem.eql(u8, path, "/")) {
+            // index.html not found, generate directory listing
+            const html = generateDirectoryListingHTML(allocator, base_dir) catch |e| {
+                std.log.err("Failed to generate directory listing: {}", .{e});
+                const internalError = "HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\nInternal Server Error";
+                _ = writer.write(internalError) catch return;
+                return;
+            };
+            defer allocator.free(html);
+
+            _ = writer.print("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n{s}", .{html}) catch return;
+            return;
+        }
+
         std.log.err("Failed to open file {s}: {}", .{ file_path, err });
         const notFound = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n404 Not Found";
         _ = writer.write(notFound) catch return;
@@ -509,4 +523,55 @@ fn getMimeType(path: []const u8) []const u8 {
     if (std.mem.endsWith(u8, path, ".jpg")) return "image/jpeg";
     if (std.mem.endsWith(u8, path, ".ico")) return "image/x-icon";
     return "text/plain";
+}
+
+fn generateDirectoryListingHTML(allocator: std.mem.Allocator, dir_path: []const u8) ![]const u8 {
+    var html = std.ArrayList(u8).init(allocator);
+    defer html.deinit();
+
+    try html.writer().print("<!DOCTYPE html>\n", .{});
+    try html.writer().print("<html>\n", .{});
+    try html.writer().print("<head>\n", .{});
+    try html.writer().print("<title>File Explorer - {s}</title>\n", .{dir_path});
+    try html.writer().print("<style>\n", .{});
+    try html.writer().print("body {{ font-family: sans-serif; }}\n", .{});
+    try html.writer().print("table {{ border-collapse: collapse; width: 100%; }}\n", .{});
+    try html.writer().print("th, td {{ text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }}\n", .{});
+    try html.writer().print("tr:hover {{ background-color: #f5f5f5; }}\n", .{});
+    try html.writer().print("</style>\n", .{});
+    try html.writer().print("</head>\n", .{});
+    try html.writer().print("<body>\n", .{});
+    try html.writer().print("<h1>File Explorer - {s}</h1>\n", .{dir_path});
+    try html.writer().print("<table>\n", .{});
+    try html.writer().print("<tr><th>Name</th><th>Type</th><th>Size</th></tr>\n", .{});
+
+    var dir = try std.fs.cwd().openDir(dir_path, .{ .iterate = true });
+    defer dir.close();
+
+    var walker = try dir.walk(allocator);
+    defer walker.deinit();
+
+    while (try walker.next()) |entry| {
+        const entry_path = try std.fs.path.join(allocator, &.{ dir_path, entry.basename });
+        defer allocator.free(entry_path);
+
+        const stat = std.fs.cwd().statFile(entry_path) catch continue;
+
+        const entry_type = if (entry.kind == .directory) "Directory" else "File";
+        const size_str = if (entry.kind == .directory) "-" else try std.fmt.allocPrint(allocator, "{}", .{stat.size});
+        defer if (entry.kind != .directory) allocator.free(size_str);
+
+        try html.writer().print("<tr><td><a href=\"{s}\">{s}</a></td><td>{s}</td><td>{s}</td></tr>\n", .{
+            entry.basename,
+            entry.basename,
+            entry_type,
+            size_str,
+        });
+    }
+
+    try html.writer().print("</table>\n", .{});
+    try html.writer().print("</body>\n", .{});
+    try html.writer().print("</html>\n", .{});
+
+    return html.toOwnedSlice();
 }
