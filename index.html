@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Yeet Fun</title>
+</head>
+<body>
+
+  <h1>Welcome to Yeet!</h1>
+
+  <p id="message">This is a simple yeetable webpage.</p>
+
+  <button id="yeetButton">Yeet me!</button>
+
+  <script>
+    const yeetButton = document.getElementById('yeetButton');
+    const message = document.getElementById('message');
+
+    yeetButton.addEventListener('click', () => {
+      message.textContent = 'You have been yeeted!';
+    });
+  </script>
+
+</body>
+</html>

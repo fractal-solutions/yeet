@@ -59,40 +59,68 @@ If you want to build Yeet from its source code for all supported platforms, you'
 Once installed, you can run the `yeet` server from any directory. The `yeet` command acts as an orchestrator, launching both the server and its interactive TUI.
 
 ```bash
-yeet <path_to_serve> <port_number>
+yeet <path_to_serve> <port_number> [options]
 ```
+
+**Options:**
+
+*   `--auth`: Enables the authentication system. When enabled, users will be redirected to a login page before accessing served content.
+*   `--auth-server-port <port>`: Specifies the port for the internal authentication server (default: `3001`). Only relevant when `--auth` is used.
+*   `--no-signup`: Disables the user signup option on the login page. Only relevant when `--auth` is used.
 
 **Examples:**
 
-*   **Serve the current directory on port 9090:**
+*   **Serve the current directory on port 9090 (no authentication):**
     ```bash
     yeet . 9090
     ```
-*   **Serve a specific file (`my_document.pdf`) on port 8000:**
+*   **Serve a specific file (`my_document.pdf`) on port 8000 (no authentication):**
     ```bash
     yeet /path/to/my_document.pdf 8000
     ```
-*   **Serve a different directory (`~/my_website`) on port 3000:**
+*   **Serve a directory (`~/my_website`) on port 3000 with authentication enabled:**
     ```bash
-    yeet ~/my_website 3000
+    yeet ~/my_website 3000 --auth
+    ```
+*   **Serve with authentication on a custom auth server port and no signup:**
+    ```bash
+    yeet . 8080 --auth --auth-server-port 4000 --no-signup
     ```
 *   **Serve the current directory on port 80 (requires sudo for ports < 1024):**
     ```bash
     sudo yeet . 80
     ```
 *   **Accessing from another device on your local network:**
-    1.  Run `yeet` on your server machine (e.g., `yeet . 9090`).
+    1.  Run `yeet` on your server machine (e.g., `yeet . 9090 --auth`).
     2.  Find your server machine's local IP address (e.g., `192.168.1.105`).
-    3.  On another device connected to the *same WiFi network*, open a web browser and go to `http://192.168.1.105:9090`.
+    3.  On another device connected to the *same WiFi network*, open a web browser and go to `http://192.168.1.105:9090`. You will be redirected to the login page if authentication is enabled.
 
 #### Interactive TUI
 
 Once the server starts, an interactive terminal interface will appear:
 
 *   It will display the server's status and the port it's running on.
-*   Use the **Up/Down arrow keys** to navigate (though currently there's only one option).
+*   If authentication is enabled, a "Create User (Admin)" option will be available.
+*   Use the **Up/Down arrow keys** to navigate.
 *   Press **Enter** to select an option.
 *   Select **"Exit Server"** to gracefully shut down the `yeet` server.
+
+### 🔒 Authentication
+
+When `yeet` is run with the `--auth` flag, it enables a built-in authentication system:
+
+*   **Login/Signup UI:** Users attempting to access served content will be redirected to a web-based login page. If not disabled by `--no-signup`, a signup option will also be available.
+*   **User Management:** User credentials (username and hashed password) are stored in a `users.json` file in the project's root directory.
+*   **Admin User Creation:** The interactive TUI provides an "Create User (Admin)" option, allowing an administrator to create new user accounts directly from the terminal. This is useful for initial setup or managing users when signup is disabled.
+*   **Session Management:** Authentication uses secure, HTTP-only cookies to manage user sessions.
+*   **Security:** For production environments or public access, it is highly recommended to run `yeet` behind a reverse proxy (e.g., Nginx, Caddy) to enable HTTPS, which encrypts traffic and protects authentication credentials in transit.
+
+**Creating an Admin User via TUI:**
+
+1.  Start `yeet` with authentication enabled (e.g., `yeet . 9090 --auth`).
+2.  In the TUI, select "Create User (Admin)".
+3.  Follow the prompts to enter a username and password for the new user.
+4.  This user can then log in via the web interface to access the served content.
 
 ### 📂 Project Structure
 

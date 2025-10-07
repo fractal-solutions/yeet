@@ -3,12 +3,107 @@ const posix = std.posix;
 
 var interrupted: std.atomic.Value(u8) = std.atomic.Value(u8).init(0); // Assuming Value is the generic atomic struct
 
+// Helper function to make an HTTP request to the auth server
+fn makeHttpRequest(
+    allocator: std.mem.Allocator,
+    host: []const u8,
+    port: u16,
+    method: []const u8,
+    path: []const u8,
+    headers: []const struct { []const u8, []const u8 },
+    body: ?[]const u8,
+) !std.ArrayList(u8) {
+    var client_socket = try std.net.tcpConnectToHost(allocator, host, port);
+    defer client_socket.close();
+
+    var writer = client_socket.writer();
+    var reader = client_socket.reader();
+
+    try writer.print("{s} {s} HTTP/1.1\r\n", .{ method, path });
+    try writer.print("Host: {s}:{d}\r\n", .{ host, port });
+    try writer.print("Connection: close\r\n", .{});
+
+    for (headers) |header| {
+        try writer.print("{s}: {s}\r\n", .{ header[0], header[1] });
+    }
+
+    if (body) |b| {
+        try writer.print("Content-Length: {d}\r\n", .{b.len});
+        try writer.print("\r\n", .{});
+        try writer.writeAll(b);
+    } else {
+        try writer.print("\r\n", .{});
+    }
+
+    var response_buffer = std.ArrayList(u8).init(allocator);
+    errdefer response_buffer.deinit();
+
+    var tmp_buf: [1024]u8 = undefined;
+    while (reader.read(&tmp_buf)) |bytes_read| {
+        try response_buffer.appendSlice(tmp_buf[0..bytes_read]);
+    } else |err| {
+        if (err != error.EndOfStream) return err;
+    }
+
+    return response_buffer;
+}
+
+// Helper function to proxy a request to the auth server
+fn proxyRequest(
+    allocator: std.mem.Allocator,
+    client_writer: anytype, // std.io.Writer
+    client_reader: anytype, // std.io.Reader
+    auth_server_port: u16,
+    method: []const u8,
+    path: []const u8,
+    headers: std.ArrayList(struct { []const u8, []const u8 }),
+    initial_request_body: ?[]const u8, // If we already read some body
+) !void {
+    var auth_server_socket = try std.net.tcpConnectToHost(allocator, "127.0.0.1", auth_server_port);
+    defer auth_server_socket.close();
+
+    var auth_writer = auth_server_socket.writer();
+    var auth_reader = auth_server_socket.reader();
+
+    // Forward request line
+    try auth_writer.print("{s} {s} HTTP/1.1\r\n", .{ method, path });
+    try auth_writer.print("Host: 127.0.0.1:{d}\r\n", .{auth_server_port});
+    try auth_writer.print("Connection: close\r\n", .{}); // Ensure connection closes after response
+
+    // Forward headers
+    for (headers.items) |header| {
+        try auth_writer.print("{s}: {s}\r\n", .{ header[0], header[1] });
+    }
+
+    // Forward body
+    if (initial_request_body) |b| {
+        try auth_writer.writeAll(b);
+    }
+    // Read and forward any remaining body from client
+    var client_body_buf: [1024]u8 = undefined;
+    while (client_reader.read(&client_body_buf)) |bytes_read| {
+        try auth_writer.writeAll(client_body_buf[0..bytes_read]);
+    } else |err| {
+        if (err != error.EndOfStream) return err;
+    }
+    try auth_writer.print("\r\n", .{}); // End of request to auth server
+
+    // Read response from auth server and relay to client
+    var auth_response_buf: [4096]u8 = undefined;
+    while (auth_reader.read(&auth_response_buf)) |bytes_read| {
+        try client_writer.writeAll(auth_response_buf[0..bytes_read]);
+    } else |err| {
+        if (err != error.EndOfStream) return err;
+    }
+}
+
 fn signalHandler(signum: c_int) callconv(.C) void {
     if (signum == posix.SIG.INT) {
         interrupted.store(1, std.builtin.AtomicOrder.release); // Store 1 for true
         std.log.info("Caught SIGINT, setting interrupted to true.", .{});
     }
 }
+
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -18,13 +113,40 @@ pub fn main() !void {
     const args = try std.process.argsAlloc(allocator);
     defer allocator.free(args);
 
-    if (args.len != 3) {
-        std.io.getStdErr().writer().print("Usage: {s} [folder|file] [port]\n", .{args[0]}) catch return;
-        return;
+    var auth_enabled: bool = false;
+    var auth_server_port: u16 = 0; // Default to 0, will be set if --auth is used
+
+    var path_arg: []const u8 = "";
+    var port_arg: []const u8 = "";
+
+    var i: usize = 1;
+    while (i < args.len) : (i += 1) {
+        if (std.mem.eql(u8, args[i], "--auth")) {
+            auth_enabled = true;
+        } else if (std.mem.eql(u8, args[i], "--auth-server-port")) {
+            i += 1;
+            if (i >= args.len) {
+                std.io.getStdErr().writer().print("Error: --auth-server-port requires a port number.\n", .{}) catch return;
+                return;
+            }
+            auth_server_port = std.fmt.parseInt(u16, args[i], 10) catch |err| {
+                std.log.err("Invalid auth server port number: {s} ({})", .{ args[i], err });
+                return;
+            };
+        } else if (path_arg.len == 0) { // First non-flag argument is path
+            path_arg = args[i];
+        } else if (port_arg.len == 0) { // Second non-flag argument is port
+            port_arg = args[i];
+        } else {
+            std.io.getStdErr().writer().print("Error: Unrecognized argument: {s}\n", .{args[i]}) catch return;
+            return;
+        }
     }
 
-    const path_arg = args[1];
-    const port_arg = args[2];
+    if (path_arg.len == 0 or port_arg.len == 0) {
+        std.io.getStdErr().writer().print("Usage: {s} [folder|file] [port] [--auth] [--auth-server-port <port>]\n", .{args[0]}) catch return;
+        return;
+    }
 
     const port = std.fmt.parseInt(u16, port_arg, 10) catch |err| {
         std.log.err("Invalid port number: {s} ({})", .{ port_arg, err });
@@ -77,7 +199,7 @@ pub fn main() !void {
                             if (err == error.WouldBlock) continue;
                             return err;
                         };
-                        if (std.Thread.spawn(.{}, handleConnection, .{ conn_fd, path_arg })) |_| {} else |err| {
+                        if (std.Thread.spawn(.{}, handleConnection, .{ allocator, conn_fd, path_arg, auth_enabled, auth_server_port })) |_| {} else |err| {
                             std.log.err("Spawn failed: {}", .{err});
                         }
                     }
@@ -87,6 +209,8 @@ pub fn main() !void {
                     }
                 }
             }
+        },
+        .file => {
             try stdout.print("Serving file {s} at http://localhost:{d}\n", .{ path_arg, port });
             while (interrupted.load(std.builtin.AtomicOrder.acquire) == 0) { // Check if 0 (false)
                 std.log.info("Interrupted flag (start of loop): {}", .{interrupted.load(std.builtin.AtomicOrder.acquire) == 1}); // Log as bool
@@ -100,7 +224,7 @@ pub fn main() !void {
                             if (err == error.WouldBlock) continue;
                             return err;
                         };
-                        if (std.Thread.spawn(.{}, handleFileConnection, .{ conn_fd, path_arg })) |_| {} else |err| {
+                        if (std.Thread.spawn(.{}, handleFileConnection, .{ allocator, conn_fd, path_arg, auth_enabled, auth_server_port })) |_| {} else |err| {
                             std.log.err("Spawn failed: {}", .{err});
                         }
                     }
@@ -118,22 +242,117 @@ pub fn main() !void {
     }
 }
 
-fn handleConnection(conn_fd: posix.fd_t, base_dir: []const u8) void {
+fn handleConnection(allocator: std.mem.Allocator, conn_fd: posix.fd_t, base_dir: []const u8, auth_enabled: bool, auth_server_port: u16) !void {
     defer posix.close(conn_fd);
     const conn_file = std.fs.File{ .handle = conn_fd };
     const reader = conn_file.reader();
     const writer = conn_file.writer();
     var buffer: [1024]u8 = undefined;
+    const bytes_read = reader.read(&buffer) catch |err| {
+        std.log.err("Failed to read request: {}", .{err});
+        return;
+    };
 
-    _ = reader.read(&buffer) catch return;
+    var request_buffer = std.ArrayList(u8).init(allocator);
+    defer request_buffer.deinit();
+    try request_buffer.appendSlice(buffer[0..bytes_read]);
 
-    // Parse request
-    var lines = std.mem.splitSequence(u8, buffer[0..], "\r\n");
+    var lines = std.mem.splitSequence(u8, request_buffer.items, "\r\n");
     const first_line = lines.next() orelse return;
     var parts = std.mem.splitScalar(u8, first_line, ' ');
-    _ = parts.next(); // GET
+    const method = parts.next() orelse return; // GET, POST, etc.
     const path = parts.next() orelse "/";
 
+    var headers = std.ArrayList(struct { []const u8, []const u8 }).init(allocator);
+    defer headers.deinit();
+
+    var cookie_header: ?[]const u8 = null;
+
+    while (lines.next()) |line| {
+        if (line.len == 0) break; // End of headers
+
+        var header_parts = std.mem.splitScalar(u8, line, ':');
+        const name = std.mem.trim(u8, header_parts.next() orelse continue, " ");
+        const value = std.mem.trim(u8, header_parts.next() orelse continue, " ");
+
+        if (std.mem.eql(u8, name, "Cookie")) {
+            cookie_header = value;
+        }
+        try headers.append(.{ name, value });
+    }
+
+    // Extract request body if any (after headers)
+    const body_start_index = std.mem.indexOf(u8, request_buffer.items, "\r\n\r\n") orelse request_buffer.items.len;
+    const request_body = if (body_start_index + 4 < request_buffer.items.len) request_buffer.items[body_start_index + 4 ..] else null;
+
+    // --- Authentication and Reverse Proxy Logic ---
+    if (auth_enabled) {
+        const auth_routes = [_][]const u8{"/login", "/signup", "/logout", "/auth/check", "/admin/users"};
+        var is_auth_route = false;
+        for (auth_routes) |route| {
+            if (std.mem.startsWith(u8, path, route)) {
+                is_auth_route = true;
+                break;
+            }
+        }
+
+        if (is_auth_route) {
+            std.log.info("Proxying auth route: {s}", .{path});
+            proxyRequest(allocator, writer, reader, auth_server_port, method, path, headers, request_body) catch |err| {
+                std.log.err("Failed to proxy auth request: {}", .{err});
+                _ = writer.writeAll("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\n500 Internal Server Error") catch {};
+            };
+            return;
+        }
+
+        // For non-auth routes, check authentication
+        var auth_headers = std.ArrayList(struct { []const u8, []const u8 }).init(allocator);
+        defer auth_headers.deinit();
+        if (cookie_header) |cookie| {
+            try auth_headers.append(.{ "Cookie", cookie });
+        }
+
+        const auth_check_response_raw = makeHttpRequest(allocator, "127.0.0.1", auth_server_port, "GET", "/auth/check", auth_headers.items, null) catch |err| {
+            std.log.err("Failed to make auth check request: {}", .{err});
+            _ = writer.writeAll("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\n500 Internal Server Error") catch {};
+            return;
+        };
+        defer auth_check_response_raw.deinit();
+
+        // Parse auth check response (simplified: just check for 200 OK and 'authenticated: true')
+        var auth_check_lines = std.mem.splitSequence(u8, auth_check_response_raw.items, "\r\n");
+        const auth_status_line = auth_check_lines.next() orelse { 
+            std.log.err("Auth check response empty.", .{});
+            _ = writer.writeAll("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\n500 Internal Server Error") catch {};
+            return;
+        };
+
+        if (!std.mem.startsWith(u8, auth_status_line, "HTTP/1.1 200 OK")) {
+            // Not authenticated, redirect to login
+            std.log.info("Auth check failed, redirecting to /login.", .{});
+            _ = writer.writeAll("HTTP/1.1 302 Found\r\nLocation: /login\r\n\r\n") catch {};
+            return;
+        }
+
+        // Further check for 'authenticated: true' in body (simplified for now)
+        // In a real scenario, you'd parse JSON. For now, assume 200 OK means authenticated.
+        // This is a simplification; proper JSON parsing would be needed here.
+        var authenticated = false;
+        while (auth_check_lines.next()) |line| {
+            if (std.mem.indexOf(u8, line, "\"authenticated\":true") != null) {
+                authenticated = true;
+                break;
+            }
+        }
+
+        if (!authenticated) {
+            std.log.info("Auth check body indicates not authenticated, redirecting to /login.", .{});
+            _ = writer.writeAll("HTTP/1.1 302 Found\r\nLocation: /login\r\n\r\n") catch {};
+            return;
+        }
+    }
+
+    // --- Original File Serving Logic (if authenticated or auth not enabled) ---
     var file_path_buf: [512]u8 = undefined;
     const file_path = blk: {
         if (std.mem.eql(u8, path, "/")) {
@@ -171,15 +390,94 @@ fn handleConnection(conn_fd: posix.fd_t, base_dir: []const u8) void {
     }
 }
 
-fn handleFileConnection(conn_fd: posix.fd_t, file_path: []const u8) void {
+fn handleFileConnection(allocator: std.mem.Allocator, conn_fd: posix.fd_t, file_path: []const u8, auth_enabled: bool, auth_server_port: u16) !void {
     defer posix.close(conn_fd);
     const conn_file = std.fs.File{ .handle = conn_fd };
     const reader = conn_file.reader();
     const writer = conn_file.writer();
     var buffer: [1024]u8 = undefined;
+    const bytes_read = reader.read(&buffer) catch |err| {
+        std.log.err("Failed to read request: {}", .{err});
+        return;
+    };
 
-    _ = reader.read(&buffer) catch return;
+    var request_buffer = std.ArrayList(u8).init(allocator);
+    defer request_buffer.deinit();
+    try request_buffer.appendSlice(buffer[0..bytes_read]);
 
+    var lines = std.mem.splitSequence(u8, request_buffer.items, "\r\n");
+    const first_line = lines.next() orelse return;
+    var parts = std.mem.splitScalar(u8, first_line, ' ');
+    _ = parts.next() orelse return; // method: GET, POST, etc.
+    _ = parts.next() orelse "/"; // path
+
+    var headers = std.ArrayList(struct { []const u8, []const u8 }).init(allocator);
+    defer headers.deinit();
+
+    var cookie_header: ?[]const u8 = null;
+
+    while (lines.next()) |line| {
+        if (line.len == 0) break; // End of headers
+
+        var header_parts = std.mem.splitScalar(u8, line, ':');
+        const name = std.mem.trim(u8, header_parts.next() orelse continue, " ");
+        const value = std.mem.trim(u8, header_parts.next() orelse continue, " ");
+
+        if (std.mem.eql(u8, name, "Cookie")) {
+            cookie_header = value;
+        }
+        try headers.append(.{ name, value });
+    }
+
+    // --- Authentication Check for Protected Resources ---
+    if (auth_enabled) {
+        var auth_headers = std.ArrayList(struct { []const u8, []const u8 }).init(allocator);
+        defer auth_headers.deinit();
+        if (cookie_header) |cookie| {
+            try auth_headers.append(.{ "Cookie", cookie });
+        }
+
+        const auth_check_response_raw = makeHttpRequest(allocator, "127.0.0.1", auth_server_port, "GET", "/auth/check", auth_headers.items, null) catch |err| {
+            std.log.err("Failed to make auth check request: {}", .{err});
+            _ = writer.writeAll("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\n500 Internal Server Error") catch {};
+            return;
+        };
+        defer auth_check_response_raw.deinit();
+
+        // Parse auth check response (simplified: just check for 200 OK and 'authenticated: true')
+        var auth_check_lines = std.mem.splitSequence(u8, auth_check_response_raw.items, "\r\n");
+        const auth_status_line = auth_check_lines.next() orelse { 
+            std.log.err("Auth check response empty.", .{});
+            _ = writer.writeAll("HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\n\r\n500 Internal Server Error") catch {};
+            return;
+        };
+
+        if (!std.mem.startsWith(u8, auth_status_line, "HTTP/1.1 200 OK")) {
+            // Not authenticated, redirect to login
+            std.log.info("Auth check failed, redirecting to /login.", .{});
+            _ = writer.writeAll("HTTP/1.1 302 Found\r\nLocation: /login\r\n\r\n") catch {};
+            return;
+        }
+
+        // Further check for 'authenticated: true' in body (simplified for now)
+        // In a real scenario, you'd parse JSON. For now, assume 200 OK means authenticated.
+        // This is a simplification; proper JSON parsing would be needed here.
+        var authenticated = false;
+        while (auth_check_lines.next()) |line| {
+            if (std.mem.indexOf(u8, line, "\"authenticated\":true") != null) {
+                authenticated = true;
+                break;
+            }
+        }
+
+        if (!authenticated) {
+            std.log.info("Auth check body indicates not authenticated, redirecting to /login.", .{});
+            _ = writer.writeAll("HTTP/1.1 302 Found\r\nLocation: /login\r\n\r\n") catch {};
+            return;
+        }
+    }
+
+    // --- Original File Serving Logic (if authenticated or auth not enabled) ---
     const file = std.fs.cwd().openFile(file_path, .{}) catch |err| {
         std.log.err("Failed to open file {s}: {}", .{ file_path, err });
         const notFound = "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n404 Not Found";

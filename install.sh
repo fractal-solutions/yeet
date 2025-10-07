@@ -68,6 +68,12 @@ if [ ! -f "$BUILD_DIR/node/$NODE_TARGET_DIR/yeet-tui" ]; then
     exit 1
 fi
 
+if [ ! -f "$BUILD_DIR/node/$NODE_TARGET_DIR/yeet-auth" ]; then
+    echo "❌ Node.js Auth executable for $OS ($ARCH) not found in '$BUILD_DIR/node/$NODE_TARGET_DIR/yeet-auth'."
+    echo "Please run 'build.sh' first."
+    exit 1
+fi
+
 if [ ! -f "$BUILD_DIR/orchestrator/yeet.sh" ]; then
     echo "❌ Orchestrator script 'yeet.sh' not found in '$BUILD_DIR/orchestrator/'."
     echo "Please run 'build.sh' first."
@@ -85,11 +91,13 @@ sudo mkdir -p "$INSTALL_DIR"
 
 sudo cp "$BUILD_DIR/zig/$ZIG_TARGET_DIR/yeet" "$INSTALL_DIR/yeet_server"
 sudo cp "$BUILD_DIR/node/$NODE_TARGET_DIR/yeet-tui" "$INSTALL_DIR/yeet_tui"
+sudo cp "$BUILD_DIR/node/$NODE_TARGET_DIR/yeet-auth" "$INSTALL_DIR/yeet_auth"
 sudo cp "$BUILD_DIR/orchestrator/yeet.sh" "$INSTALL_DIR/yeet"
 
 # Make sure the copied scripts are executable
 sudo chmod +x "$INSTALL_DIR/yeet_server"
 sudo chmod +x "$INSTALL_DIR/yeet_tui"
+sudo chmod +x "$INSTALL_DIR/yeet_auth"
 sudo chmod +x "$INSTALL_DIR/yeet"
 
 if [ $? -ne 0 ]; then

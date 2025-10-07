@@ -84,7 +84,24 @@ for PKG_TARGET in "${!PKG_TARGET_MAP[@]}"; do
     fi
     echo "  ✅ Bundled yeet-tui for $PKG_TARGET."
 done
-echo "✅ All yeet-tui executables bundled."
+    echo "✅ All yeet-tui executables bundled."
+
+# --- Build yeet-auth (Node.js executable) for multiple targets ---
+echo ""
+echo "⚙️ Bundling yeet-auth (Node.js executable) for multiple targets..."
+
+for PKG_TARGET in "${!PKG_TARGET_MAP[@]}"; do
+    OS_ARCH_NAME="${PKG_TARGET_MAP[$PKG_TARGET]}"
+    echo "  Bundling for pkg target: $PKG_TARGET (Output name: yeet-auth-$OS_ARCH_NAME)"
+    mkdir -p "$NODE_OUT_DIR/$OS_ARCH_NAME"
+    pkg auth-server.js --assets "auth-ui/,users.json" --targets "$PKG_TARGET" -o "$NODE_OUT_DIR/$OS_ARCH_NAME/yeet-auth"
+    if [ $? -ne 0 ]; then
+        echo "❌ Failed to bundle yeet-auth for $PKG_TARGET. Please check 'pkg' output."
+        exit 1
+    fi
+    echo "  ✅ Bundled yeet-auth for $PKG_TARGET."
+done
+echo "✅ All yeet-auth executables bundled."
 
 # --- Copy yeet.sh (orchestration script) ---
 echo ""
