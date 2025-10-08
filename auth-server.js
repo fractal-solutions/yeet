@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 
-const USERS_FILE = path.join(__dirname, 'users.json');
+const USERS_FILE = path.join(process.env.YEET_SHARE_DIR || __dirname, 'users.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey'; // Use environment variable for production
 const TOKEN_EXPIRATION = '1h';
 
