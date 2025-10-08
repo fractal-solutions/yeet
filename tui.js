@@ -37,83 +37,87 @@ const http = require('http'); // For making requests to the auth server
     choices.unshift({ title: 'Create User (Admin)', value: 'createUser' });
   }
 
-  const response = await prompts({
-    type: 'select',
-    name: 'action',
-    message: 'Select an action',
-    choices: choices
-  });
+  while (true) {
+    const response = await prompts({
+      type: 'select',
+      name: 'action',
+      message: 'Select an action',
+      choices: choices
+    });
 
-  if (response.action === 'exit') {
-    console.log('Exiting TUI...');
-    // The parent bash script will handle killing the yeet process
-  } else if (response.action === 'createUser') {
-    console.log('\n--- Create New User ---');
-    const userDetails = await prompts([
-      {
-        type: 'text',
-        name: 'username',
-        message: 'Enter new username:',
-        validate: value => value.length > 0 ? true : 'Username cannot be empty'
-      },
-      {
-        type: 'password',
-        name: 'password',
-        message: 'Enter new password:',
-        validate: value => value.length >= 6 ? true : 'Password must be at least 6 characters'
-      }
-    ]);
-
-    if (userDetails.username && userDetails.password) {
-      const postData = JSON.stringify({
-        username: userDetails.username,
-        password: userDetails.password
-      });
-
-      const options = {
-        hostname: '127.0.0.1',
-        port: authServerPort,
-        path: '/admin/users',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(postData)
+    if (response.action === 'exit') {
+      console.log('Exiting TUI...');
+      // The parent bash script will handle killing the yeet process
+      break; // Exit the loop
+    } else if (response.action === 'createUser') {
+      console.log('\n--- Create New User ---');
+      const userDetails = await prompts([
+        {
+          type: 'text',
+          name: 'username',
+          message: 'Enter new username:',
+          validate: value => value.length > 0 ? true : 'Username cannot be empty'
+        },
+        {
+          type: 'password',
+          name: 'password',
+          message: 'Enter new password:',
+          validate: value => value.length >= 6 ? true : 'Password must be at least 6 characters'
         }
-      };
+      ]);
 
-      const req = http.request(options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => {
-          data += chunk;
+      if (userDetails.username && userDetails.password) {
+        const postData = JSON.stringify({
+          username: userDetails.username,
+          password: userDetails.password
         });
-        res.on('end', () => {
-          if (res.statusCode === 201) {
-            console.log(`✅ User '${userDetails.username}' created successfully!`);
-          } else {
-            try {
-              const errorResponse = JSON.parse(data);
-              console.error(`❌ Failed to create user: ${errorResponse.message || 'Unknown error'}`);
-            } catch (e) {
-              console.error(`❌ Failed to create user. Server responded with status ${res.statusCode}: ${data}`);
-            }
+
+        const options = {
+          hostname: '127.0.0.1',
+          port: authServerPort,
+          path: '/admin/users',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(postData)
           }
-          // Re-display TUI menu after action
-          // This would ideally loop back to the prompts, but for simplicity, we'll just exit for now.
-          // A more advanced TUI would re-render the menu.
-          process.exit(0);
+        };
+
+        const req = http.request(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => {
+            data += chunk;
+          });
+          res.on('end', () => {
+            if (res.statusCode === 201) {
+              console.log(`✅ User '${userDetails.username}' created successfully!`);
+            } else {
+              try {
+                const errorResponse = JSON.parse(data);
+                console.error(`❌ Failed to create user: ${errorResponse.message || 'Unknown error'}`);
+              } catch (e) {
+                console.error(`❌ Failed to create user. Server responded with status ${res.statusCode}: ${data}`);
+              }
+            }
+            // Re-display TUI menu after action
+            // This would ideally loop back to the prompts, but for simplicity, we'll just exit for now.
+            // A more advanced TUI would re-render the menu.
+          });
         });
-      });
 
-      req.on('error', (e) => {
-        console.error(`❌ Error connecting to auth server: ${e.message}`);
-        process.exit(1);
-      });
+        req.on('error', (e) => {
+          console.error(`❌ Error connecting to auth server: ${e.message}`);
+        });
 
-      req.write(postData);
-      req.end();
-    } else {
-      console.log('User creation cancelled.');
-      process.exit(0);
+        req.write(postData);
+        req.end();
+
+        // Wait for the request to finish before showing the menu again
+        await new Promise(resolve => req.on('close', resolve));
+
+      } else {
+        console.log('User creation cancelled.');
+      }
     }
   }
 })();
