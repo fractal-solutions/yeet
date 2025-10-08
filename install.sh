@@ -99,6 +99,8 @@ sudo cp "$BUILD_DIR/orchestrator/yeet.sh" "$INSTALL_DIR/yeet"
 sudo cp -r "auth-ui" "$SHARE_DIR/auth-ui"
 sudo cp "users.json" "$SHARE_DIR/users.json"
 
+sudo chown -R $(logname) "$SHARE_DIR"
+
 # Make sure the copied scripts are executable
 sudo chmod +x "$INSTALL_DIR/yeet_server"
 sudo chmod +x "$INSTALL_DIR/yeet_tui"
