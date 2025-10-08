@@ -1,0 +1,27 @@
+{
+  "name": "yeet-auth",
+  "version": "1.0.0",
+  "description": "Auth server for yeet",
+  "main": "auth-server.js",
+  "bin": "auth-server.js",
+  "scripts": {
+    "start": "node auth-server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "pkg": {
+    "assets": [
+      "auth-ui/**/*",
+      "users.json"
+    ]
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^1.20.2",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "prompts": "^2.4.2"
+  }
+}

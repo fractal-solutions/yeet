@@ -94,7 +94,7 @@ for PKG_TARGET in "${!PKG_TARGET_MAP[@]}"; do
     OS_ARCH_NAME="${PKG_TARGET_MAP[$PKG_TARGET]}"
     echo "  Bundling for pkg target: $PKG_TARGET (Output name: yeet-auth-$OS_ARCH_NAME)"
     mkdir -p "$NODE_OUT_DIR/$OS_ARCH_NAME"
-    pkg auth-server.js --targets "$PKG_TARGET" --public -o "$NODE_OUT_DIR/$OS_ARCH_NAME/yeet-auth" --debug
+    pkg auth-server.js -c auth-package.json --targets "$PKG_TARGET" --public -o "$NODE_OUT_DIR/$OS_ARCH_NAME/yeet-auth" --debug
     if [ $? -ne 0 ]; then
         echo "❌ Failed to bundle yeet-auth for $PKG_TARGET. Please check 'pkg' output."
         exit 1
