@@ -44,11 +44,11 @@ fi
 YEET_AUTH_PID=""
 if $AUTH_ENABLED; then
     echo "🚀 Starting yeet_auth server on port $AUTH_SERVER_PORT..."
-    AUTH_CMD="YEET_SHARE_DIR=/usr/local/share/yeet yeet_auth --auth-server-port $AUTH_SERVER_PORT"
     if $NO_SIGNUP; then
-        AUTH_CMD+=" --no-signup"
+        YEET_SHARE_DIR=/usr/local/share/yeet yeet_auth --auth-server-port $AUTH_SERVER_PORT --no-signup &
+    else
+        YEET_SHARE_DIR=/usr/local/share/yeet yeet_auth --auth-server-port $AUTH_SERVER_PORT &
     fi
-    $AUTH_CMD &
     YEET_AUTH_PID=$!
     echo "✅ yeet_auth server (PID: $YEET_AUTH_PID) started."
 fi
@@ -56,13 +56,11 @@ fi
 # --- yeet_server start/kill logic ---
 # Assuming yeet_server is in PATH after installation
 echo "🚀 Starting yeet_server..."
-YEET_SERVER_CMD="yeet_server"
 if $AUTH_ENABLED; then
-    YEET_SERVER_CMD+=" --auth --auth-server-port $AUTH_SERVER_PORT"
+    YEET_SHARE_DIR=/usr/local/share/yeet yeet_server --auth --auth-server-port $AUTH_SERVER_PORT ${YEET_ARGS[@]} &
+else
+    yeet_server ${YEET_ARGS[@]} &
 fi
-YEET_SERVER_CMD+=" ${YEET_ARGS[@]}"
-
-$YEET_SERVER_CMD &
 YEET_SERVER_PID=$!
 echo "✅ yeet_server (PID: $YEET_SERVER_PID) started."
 
