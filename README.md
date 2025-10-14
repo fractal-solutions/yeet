@@ -12,10 +12,10 @@ A simple, fast, and modern file and directory server with a built-in terminal UI
 
 ## Installation
 
-To install `yeet` globally, clone this repository and run the `install.sh` script:
+To install `yeet` globally, download or clone this repository and run the `install.sh` script:
 
 ```bash
-git clone https://github.com/your-username/yeet.git # Replace with your repo URL
+git clone https://github.com/fractal-solutions/yeet.git
 cd yeet
 chmod +x install.sh
 ./install.sh
