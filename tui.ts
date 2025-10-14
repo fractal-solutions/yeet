@@ -213,9 +213,9 @@ async function managePermissions(username: string) {
             const mainChoices = [];
             if (authEnabled) {
                 mainChoices.push({ title: `${chalk.green('＋')}  Create User`, value: 'createUser' });
-                mainChoices.push({ title: `${chalk.cyan('≡')}  Manage Users`, value: 'manageUsers' });
+                mainChoices.push({ title: `${chalk.cyan('≡')}   Manage Users`, value: 'manageUsers' });
             }
-            mainChoices.push({ title: `${chalk.red('⏻')} Exit Server`, value: 'exit' });
+            mainChoices.push({ title: `${chalk.red('⏻')}   Exit Server`, value: 'exit' });
 
             const { action } = await prompts({
                 type: 'select',

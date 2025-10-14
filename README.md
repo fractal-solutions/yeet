@@ -12,11 +12,22 @@ A simple, fast, and modern file and directory server with a built-in terminal UI
 
 ## Installation
 
-To install dependencies:
+To install `yeet` globally, clone this repository and run the `install.sh` script:
 
 ```bash
-bun install
+git clone https://github.com/your-username/yeet.git # Replace with your repo URL
+cd yeet
+chmod +x install.sh
+./install.sh
 ```
+
+This script will:
+1.  Check for Bun runtime and install it if not found (using `npm` or `curl`).
+2.  Build the `yeet` executable.
+3.  Move the executable to `~/.local/bin`.
+4.  Automatically add `~/.local/bin` to your shell's PATH (for bash/zsh).
+
+After installation, please restart your terminal or run `source ~/.bashrc` (or `source ~/.zshrc`) for the changes to take effect.
 
 ## Usage
 
