@@ -30,6 +30,19 @@ bun start [options] [path]
 -   `--auth`: Enables authentication and all related features.
 -   `--no-signup`: When used with `--auth`, this disables the public signup page.
 -   `--session=<duration>`: Sets the JWT session expiration time. Examples: `15m` (15 minutes), `1h` (1 hour), `3d` (3 days), `30s` (30 seconds). If not provided, sessions default to `1h`.
+-   `--title="<Your Title>"`: Sets a custom title that will be displayed on the login, signup, and explorer pages. Defaults to `yeet`.
+-   `--theme=<theme_name>`: Applies a visual theme to the web interface. Available themes:
+    *   `default`: The standard dark theme.
+    *   `blue`: A cool blue-toned dark theme.
+    *   `green`: A calm green-toned dark theme.
+    *   `dark`: A very dark, high-contrast theme.
+    *   `light`: A bright, light-mode theme.
+    *   `zen`: A calm, minimalist theme with soft greens and grays.
+    *   `glass`: A theme with subtle transparency, giving a frosted glass effect.
+    *   `aero`: A vibrant theme with gradients and a slightly metallic, modern feel.
+    *   `matrix`: A dark theme with neon green accents, reminiscent of the Matrix movie.
+    *   `solarized`: An eye-friendly theme with a carefully selected color palette.
+    Defaults to `default`.
 
 ### The Terminal UI (TUI)
 

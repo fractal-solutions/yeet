@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{shareTitle}} - Index of {{pathname}}</title>
+    {{themeStyles}}
+    <style>
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            color: var(--text-color);
+        }
+        .top-bar {
+            background-color: var(--container-bg);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+        .top-bar h1 {
+            margin: 0;
+            font-size: 1.5em;
+            color: var(--primary-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .top-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .top-bar-actions .yeeted-veneration {
+            color: var(--placeholder-color);
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        .yeeted-highlight {
+            color: var(--primary-color);
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(52, 103, 154, 0.5); /* Subtle glow */
+        }
+        .top-bar-actions button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background-color: var(--hover-bg-color);
+        }
+        .container {
+            background-color: var(--container-bg);
+            padding: 30px;
+            border-radius: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            margin: 20px auto;
+            width: 90%;
+            max-width: 1000px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+        }
+        h1.page-title {
+            color: var(--text-color);
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-weight: normal;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--table-border);
+        }
+        th {
+            color: var(--primary-color);
+            font-weight: bold;
+            background-color: var(--table-header-bg);
+        }
+        tr:hover {
+            background-color: var(--hover-bg-color);
+        }
+        a {
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        a:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+        .icon {
+            color: var(--primary-color);
+            margin-right: 10px;
+            font-size: 1.1em;
+            width: 20px;
+        }
+        .size, .modified {
+            color: var(--placeholder-color);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1>{{shareTitle}}</h1>
+        <div class="top-bar-actions">
+            <span class="yeeted-veneration">Content <span class="yeeted-highlight">yeeted</span> to you</span>
+            <button id="download-folder-btn">Download Folder</button>
+        </div>
+    </div>
+    <div class="container">
+        <h1 class="page-title">Index of {{pathname}}</h1>
+        <table>
+            <tr class="header">
+                <th colspan="2">Name</th>
+                <th>Size</th>
+                <th>Last Modified</th>
+            </tr>
+            {{parentDirectoryLink}}
+            {{files}}
+        </table>
+    </div>
+    <script>
+        document.getElementById('download-folder-btn').addEventListener('click', () => {
+            const currentPath = window.location.pathname;
+            window.location.href = `/download-folder?path=${currentPath}`;
+        });
+    </script>
+</body>
+</html>
