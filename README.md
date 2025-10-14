@@ -4,11 +4,20 @@ A simple, fast, and modern file and directory server with a built-in terminal UI
 
 ## Features
 
--   Blazing fast file and directory serving.
--   Optional JWT-based authentication to protect your files.
--   A beautiful, interactive Terminal UI (TUI) for managing the server and users.
--   Path-based permission system to control user access to specific directories.
--   Modern, dark-themed, and browsable directory listing.
+`yeet` offers a robust and user-friendly solution for serving files and directories, packed with powerful features:
+
+-   **High-Performance File Serving**: Experience blazing fast delivery of files and directories, powered by Bun.
+-   **Secure Authentication**: Protect your content with optional JWT-based authentication, including:
+    *   **User Login & Signup**: Users can securely log in, and new users can sign up (configurable).
+    *   **Role-Based Access Control**: Implement a path-based permission system to precisely control user access to specific directories.
+-   **Interactive Terminal UI (TUI)**: A beautiful and intuitive TUI for comprehensive server and user management, including:
+    *   Creating and deleting users.
+    *   Changing user passwords.
+    *   Managing user permissions with ease.
+-   **Customizable Web Interface**:
+    *   **Modern Directory Listing**: Enjoy a sleek, dark-themed, and browsable directory listing.
+    *   **Theming Support**: Personalize the web interface with a variety of built-in themes.
+-   **Folder Download**: Easily download entire folders as ZIP archives.
 
 ## Installation
 
