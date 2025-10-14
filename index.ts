@@ -10,11 +10,34 @@ const authEnabled = args.includes('--auth');
 const noSignup = args.includes('--no-signup');
 const yeetPath = args.find(arg => !arg.startsWith('--')) || '.';
 
+const sessionArg = args.find(arg => arg.startsWith('--session='));
+let sessionExpiration = '1h'; // Default to 1 hour
+if (sessionArg) {
+    sessionExpiration = sessionArg.split('=')[1];
+}
+
 const port = process.env.PORT || 3000;
 const absoluteYeetPath = path.resolve(yeetPath);
 const USERS_FILE = path.join(__dirname, 'users.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
-const TOKEN_EXPIRATION = '1h';
+const TOKEN_EXPIRATION = sessionExpiration;
+
+// Function to convert duration string (e.g., "15m", "1h", "3d") to seconds
+function getExpiresInSeconds(duration: string): number {
+    const value = parseInt(duration.slice(0, -1));
+    const unit = duration.slice(-1);
+
+    switch (unit) {
+        case 's': return value;
+        case 'm': return value * 60;
+        case 'h': return value * 60 * 60;
+        case 'd': return value * 24 * 60 * 60;
+        default: return 3600; // Default to 1 hour if invalid
+    }
+}
+
+const TOKEN_MAX_AGE_SECONDS = getExpiresInSeconds(TOKEN_EXPIRATION);
+
 
 // --- User Management ---
 const readUsers = () => {
@@ -72,6 +95,9 @@ const verifyToken = (token: string) => {
     try {
         return jwt.verify(token, JWT_SECRET);
     } catch (e) {
+        if (e.name === 'TokenExpiredError') {
+            console.log('Token expired');
+        }
         return null;
     }
 };
@@ -164,7 +190,7 @@ Bun.serve({
             return new Response(null, {
                 status: 302,
                 headers: {
-                    'Set-Cookie': `token=${newToken}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax`,
+                    'Set-Cookie': `token=${newToken}; HttpOnly; Path=/; Max-Age=${TOKEN_MAX_AGE_SECONDS}; SameSite=Lax`,
                     'Location': '/'
                 }
             });
@@ -179,7 +205,7 @@ Bun.serve({
             return new Response(null, {
                 status: 302,
                 headers: {
-                    'Set-Cookie': `token=${newToken}; HttpOnly; Path=/; Max-Age=3600; SameSite=Lax`,
+                    'Set-Cookie': `token=${newToken}; HttpOnly; Path=/; Max-Age=${TOKEN_MAX_AGE_SECONDS}; SameSite=Lax`,
                     'Location': '/'
                 }
                 

@@ -184,10 +184,11 @@ async function managePermissions(username: string) {
     const args = process.argv.slice(2);
     const authEnabled = args.includes('--auth');
     const yeetPath = args.find(arg => !arg.startsWith('--')) || '.';
+    const sessionArg = args.find(arg => arg.startsWith('--session='));
     const absoluteYeetPath = path.resolve(yeetPath);
 
     const serverProcess = Bun.spawn(
-        ['bun', 'run', path.join(__dirname, 'index.ts'), ...args],
+        ['bun', 'run', path.join(__dirname, 'index.ts'), ...args, ...(sessionArg ? [sessionArg] : [])],
         {
             stdio: ['inherit', 'inherit', 'inherit']
         }

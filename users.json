@@ -1,6 +1,6 @@
 {
-  "wes": {
-    "password": "$2b$10$FZrL4L3AsbgEx0N7dyoeKe50k.NGc/1lw7N1nNU1rCebJHZVWDG36",
+  "bin": {
+    "password": "$2b$10$juqjWM/h5JNTQVxvsDBjxeatp0tDcduMRh72iCLnE91XTzeKXJR6y",
     "permissions": [
       "/"
     ]

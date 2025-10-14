@@ -29,6 +29,7 @@ bun start [options] [path]
 -   `[path]`: The file or directory you want to serve. Defaults to the current directory (`.`).
 -   `--auth`: Enables authentication and all related features.
 -   `--no-signup`: When used with `--auth`, this disables the public signup page.
+-   `--session=<duration>`: Sets the JWT session expiration time. Examples: `15m` (15 minutes), `1h` (1 hour), `3d` (3 days), `30s` (30 seconds). If not provided, sessions default to `1h`.
 
 ### The Terminal UI (TUI)
 
