@@ -7,7 +7,8 @@ A simple, fast, and modern file and directory server with a built-in terminal UI
 `yeet` offers a robust and user-friendly solution for serving files and directories, packed with powerful features:
 
 -   **High-Performance File Serving**: Experience blazing fast delivery of files and directories, powered by Bun.
--   **Secure Authentication**: Protect your content with optional JWT-based authentication, including:
+-   **Optimized for Web Applications & Rapid Prototyping**: Seamlessly serve built Single Page Applications (SPAs) like those from Vite, React, Vue, or Angular. `yeet` simplifies development by providing instant serving with automatic `index.html` fallbacks. **Crucially, when authentication is enabled, `yeet` automatically provides themed login and signup pages, handling the entire authentication flow for your web application out-of-the-box.** This allows you to focus on your application logic without worrying about building or integrating authentication infrastructure.
+-   **Integrated Secure Authentication & User Management**: Get built-in JWT-based authentication, user login/signup, and comprehensive user management (create, delete, change password, permissions) via an intuitive Terminal UI. This allows you to quickly scaffold and serve web projects with secure access control from day one, **without writing a single line of authentication code for your frontend.**
     *   **User Login & Signup**: Users can securely log in, and new users can sign up (configurable).
     *   **Role-Based Access Control**: Implement a path-based permission system to precisely control user access to specific directories.
 -   **Interactive Terminal UI (TUI)**: A beautiful and intuitive TUI for comprehensive server and user management, including:
@@ -74,6 +75,19 @@ These options are only relevant when `--auth` is enabled.
     *   `matrix`: A dark theme with neon green accents, reminiscent of the Matrix movie.
     *   `solarized`: An eye-friendly theme with a carefully selected color palette.
     Defaults to `default`.
+
+### Serving Web Applications
+
+`yeet` is ideal for quickly serving static web applications, Single Page Applications (SPAs), or individual HTML files.
+
+-   **Serving a Build Directory**: Point `yeet` to your project's build output directory (e.g., `dist`, `build`, `public`) to instantly serve your compiled Vite, React, Vue, or Angular applications. `yeet` will automatically serve `index.html` for directory requests.
+    ```bash
+    yeet ./dist
+    ```
+-   **Serving an HTML File**: Directly serve a specific HTML file.
+    ```bash
+    yeet ./my-app/index.html
+    ```
 
 ### The Terminal UI (TUI)
 
