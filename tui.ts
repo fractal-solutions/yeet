@@ -187,10 +187,12 @@ async function managePermissions(username: string) {
     const sessionArg = args.find(arg => arg.startsWith('--session='));
     const titleArg = args.find(arg => arg.startsWith('--title='));
     const themeArg = args.find(arg => arg.startsWith('--theme='));
+    const portArg = args.find(arg => arg.startsWith('--port='));
+    const currentPort = portArg ? parseInt(portArg.split('=')[1]) : (process.env.PORT ? parseInt(process.env.PORT) : 3000);
     const absoluteYeetPath = path.resolve(yeetPath);
 
     const serverProcess = Bun.spawn(
-        ['bun', 'run', path.join(__dirname, 'index.ts'), ...args, ...(sessionArg ? [sessionArg] : []), ...(titleArg ? [titleArg] : []), ...(themeArg ? [themeArg] : [])],
+        ['bun', 'run', path.join(__dirname, 'index.ts'), ...args, ...(sessionArg ? [sessionArg] : []), ...(titleArg ? [titleArg] : []), ...(themeArg ? [themeArg] : []), ...(portArg ? [portArg] : [])],
         {
             stdio: ['inherit', 'inherit', 'inherit']
         }
@@ -199,7 +201,7 @@ async function managePermissions(username: string) {
     try {
         const headerLines = [
             `${chalk.cyan('Serving:')} ${chalk.white(absoluteYeetPath)}`,
-            `${chalk.cyan('URL:')}     ${chalk.yellow(`http://localhost:${port}`)}`,
+            `${chalk.cyan('URL:')}     ${chalk.yellow(`http://localhost:${currentPort}`)}`,
             `${chalk.cyan('PID:')}     ${chalk.magenta(serverProcess.pid)}`,
             `${chalk.cyan('Auth:')}    ${authEnabled ? chalk.green('Enabled') : chalk.red('Disabled')}`
         ];

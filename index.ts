@@ -24,6 +24,9 @@ const SHARE_TITLE = titleArg ? titleArg.split('=')[1] : 'yeet';
 const themeArg = args.find(arg => arg.startsWith('--theme='));
 const THEME_NAME = themeArg ? themeArg.split('=')[1] : 'default';
 
+const portArg = args.find(arg => arg.startsWith('--port='));
+const port = portArg ? parseInt(portArg.split('=')[1]) : (process.env.PORT ? parseInt(process.env.PORT) : 3000);
+
 const themeMap = {
     'default': {
         '--bg-color': '#2b2b2b',
@@ -186,16 +189,7 @@ function generateThemeStyles(themeName: string): string {
     return `<style>:root {\n${styles}}</style>`;
 }
 
-function generateThemeStyles(themeName: string): string {
-    const theme = themeMap[themeName] || themeMap['default'];
-    let styles = '';
-    for (const [key, value] of Object.entries(theme)) {
-        styles += `${key}: ${value};\n`;
-    }
-    return `<style>:root {\n${styles}}</style>`;
-}
 
-const port = process.env.PORT || 3000;
 const absoluteYeetPath = path.resolve(yeetPath);
 const USERS_FILE = path.join(__dirname, 'users.json');
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';

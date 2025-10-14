@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sophisticated Yeet Share</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        .navbar {
+            background-color: #333;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .navbar a {
+            color: #e0e0e0;
+            text-decoration: none;
+            margin-right: 1rem;
+            font-weight: bold;
+        }
+        .navbar a:hover {
+            color: #00aaff;
+        }
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #2b2b2b;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        h1, h2 {
+            color: #00aaff;
+            border-bottom: 1px solid #00aaff;
+            padding-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+        .card {
+            background-color: #3c3c3c;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .button-group button {
+            background-color: #00aaff;
+            color: white;
+            border: none;
+            padding: 0.7rem 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-right: 0.5rem;
+            transition: background-color 0.2s ease;
+        }
+        .button-group button:hover {
+            background-color: #0088cc;
+        }
+        .footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 3rem;
+            color: #888;
+            font-size: 0.9em;
+            border-top: 1px solid #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <a href="/">Home</a>
+            <a href="/docs">Docs</a>
+            <a href="/about">About</a>
+        </div>
+        <div id="live-clock"></div>
+    </div>
+
+    <div class="container">
+        <h1>Welcome to the Sophisticated Yeet Share!</h1>
+        <p>This page demonstrates a more complex HTML structure with interactive elements, served by your <strong>yeet</strong> server.</p>
+
+        <h2>Interactive Counter</h2>
+        <div class="card">
+            <p>Current count: <span id="counter-value">0</span></p>
+            <div class="button-group">
+                <button id="increment-btn">Increment</button>
+                <button id="decrement-btn">Decrement</button>
+                <button id="reset-btn">Reset</button>
+            </div>
+        </div>
+
+        <h2>Dynamic Content</h2>
+        <div class="card">
+            <p>This section could be updated dynamically via JavaScript or server-side logic.</p>
+            <p>Current time (client-side): <span id="current-time"></span></p>
+        </div>
+
+        <h2>About This Share</h2>
+        <div class="card">
+            <p>This is a placeholder for more detailed information about the content being shared.</p>
+            <p>Feel free to explore other files and folders if you have the necessary permissions.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2023 Sophisticated Yeet Share. All rights reserved.
+    </div>
+
+    <script>
+        // Live Clock
+        function updateClock() {
+            const now = new Date();
+            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            document.getElementById('live-clock').textContent = now.toLocaleTimeString('en-US', options);
+            document.getElementById('current-time').textContent = now.toLocaleString();
+        }
+        setInterval(updateClock, 1000);
+        updateClock(); // Initial call
+
+        // Counter Logic
+        let count = 0;
+        const counterValue = document.getElementById('counter-value');
+        document.getElementById('increment-btn').addEventListener('click', () => {
+            count++;
+            counterValue.textContent = count;
+        });
+        document.getElementById('decrement-btn').addEventListener('click', () => {
+            count--;
+            counterValue.textContent = count;
+        });
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            count = 0;
+            counterValue.textContent = count;
+        });
+    </script>
+</body>
+</html>

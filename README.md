@@ -43,6 +43,7 @@ bun start [options] [path]
     *   `matrix`: A dark theme with neon green accents, reminiscent of the Matrix movie.
     *   `solarized`: An eye-friendly theme with a carefully selected color palette.
     Defaults to `default`.
+-   `--port=<port_number>`: Specifies the port on which the server will listen. Defaults to `3000` or the value of the `PORT` environment variable.
 
 ### The Terminal UI (TUI)
 
