@@ -31,16 +31,27 @@ After installation, please restart your terminal or run `source ~/.bashrc` (or `
 
 ## Usage
 
-To start the server, use the `start` script from within the `yeet` directory.
+Once installed, you can run `yeet` from any directory.
 
 ```bash
-bun start [options] [path]
+yeet [options] [path]
 ```
 
+### Core Options
+
 -   `[path]`: The file or directory you want to serve. Defaults to the current directory (`.`).
--   `--auth`: Enables authentication and all related features.
--   `--no-signup`: When used with `--auth`, this disables the public signup page.
+-   `--port=<port_number>`: Specifies the port on which the server will listen. Defaults to `3000` or the value of the `PORT` environment variable.
+
+### Authentication Options
+
+These options are only relevant when `--auth` is enabled.
+
+-   `--auth`: Enables JWT-based authentication, protecting all file serving and activating user management features in the TUI.
+-   `--no-signup`: When used with `--auth`, this disables the public signup page, meaning new users can only be created via the TUI.
 -   `--session=<duration>`: Sets the JWT session expiration time. Examples: `15m` (15 minutes), `1h` (1 hour), `3d` (3 days), `30s` (30 seconds). If not provided, sessions default to `1h`.
+
+### Appearance Options
+
 -   `--title="<Your Title>"`: Sets a custom title that will be displayed on the login, signup, and explorer pages. Defaults to `yeet`.
 -   `--theme=<theme_name>`: Applies a visual theme to the web interface. Available themes:
     *   `default`: The standard dark theme.
@@ -54,7 +65,6 @@ bun start [options] [path]
     *   `matrix`: A dark theme with neon green accents, reminiscent of the Matrix movie.
     *   `solarized`: An eye-friendly theme with a carefully selected color palette.
     Defaults to `default`.
--   `--port=<port_number>`: Specifies the port on which the server will listen. Defaults to `3000` or the value of the `PORT` environment variable.
 
 ### The Terminal UI (TUI)
 
